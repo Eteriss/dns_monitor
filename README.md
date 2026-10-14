@@ -1,38 +1,70 @@
 # DNS Monitor
 
-**Autor:** Adam Pastierik \
-**Login:** xpasti00 \
-**Dátum vytvorenia:** 20.10.2024
+A command-line DNS traffic analyzer written in C++. It captures DNS messages from a live network interface or reads them from a `.pcap` file, decodes them at the packet level, and prints the queries and responses in a readable form.
 
-## Popis programu
+Built as part of the Network Applications course at Brno University of Technology (2024).
 
-DNS Monitor je aplikácia napísaná v C++ na analýzu a monitorovanie a výpis informácií DNS správ v sieti. Program spracováva zachytené pakety zo sieťového rozhrania alebo .pcap súboru a rozpoznáva medzi formátmi IPv4 a IPv6. Implementovaná funkcionalita zahŕňa detekciu typu linkovej vrstvy (Ethernet alebo Linux cooked mode), identifikáciu verzie IP, a spracovanie obsahu DNS správ z UDP paketov. Aplikácia podporuje záznamy typu A, AAAA, NS, MX, SOA, CNAME a SRV. Okrem spracovania týchto typov záznamov aplikácia poskytuje aj výpis doménových mien a ich prekladov na IP adresy.
+## Features
 
-## Preklad a spustenie
+- **Live capture or offline analysis**: sniff DNS traffic on a network interface, or analyze an existing `.pcap` capture
+- **Link layer detection**: supports Ethernet and Linux cooked capture (SLL)
+- **IPv4 and IPv6** support
+- **DNS record parsing** for A, AAAA, NS, MX, SOA, CNAME and SRV records
+- **Compact or verbose output**: a one-line summary per message, or the full breakdown of every section (question, answer, authority, additional)
+- **Domain extraction**: writes all observed domain names to a file
+- **Resolution tracking**: writes domain-to-IP translations seen in responses to a file
 
-```
+
+## Project structure
+
+| File | Purpose |
+| --- | --- |
+| `main.cpp` | Entry point |
+| `arg_parser.cpp/.hpp` | Command-line argument parsing and validation |
+| `dns_monitor.cpp/.hpp` | Packet capture, link/IP layer handling and DNS message parsing |
+| `section.cpp/.hpp` | Parsing of DNS resource records |
+| `packets/` | Sample `.pcap` files for testing |
+| `manual.pdf` | Detailed documentation (in Slovak) |
+
+## Requirements
+
+- Linux
+- C++ compiler (g++)
+- libpcap
+- make
+
+## Build
+
+```sh
 make
 ```
 
-```bash
+## Usage
+
+```sh
 ./dns-monitor (-i <interface> | -p <pcapfile>) [-v] [-d <domainsfile>] [-t <translationsfile>]
 ```
 
--i: určuje sieťové rozhranie, z ktorého sa budú zachytávať DNS pakety. \
--p: určuje pcap súbor, ktorý sa bude analyzovať, ak sa nepoužíva sieťové rozhranie. \
--v: nastaví mód s podrobným výstupom (verbose mode). \
--d: určuje cestu k súboru, kde sa budú ukladať preložené domény. \
--t: určuje cestu k súboru s prekladmi domén na IP adresy.
+| Option | Description |
+| --- | --- |
+| `-i <interface>` | Network interface to capture DNS traffic from |
+| `-p <pcapfile>` | `.pcap` file to analyze instead of a live interface |
+| `-v` | Verbose mode: print full details of each DNS message |
+| `-d <domainsfile>` | File to write observed domain names to |
+| `-t <translationsfile>` | File to write domain-to-IP translations to |
 
-## Zoznam odovzdaných súborov
+Exactly one of `-i` or `-p` must be given. Live capture usually requires root privileges.
 
-- main.cpp
-- arg_parser.cpp
-- arg_parser.hpp
-- dns_monitor.cpp
-- dns_monitor.hpp
-- section.cpp
-- section.hpp
-- Makefile
-- README.md
-- manual.pdf
+### Examples
+
+Monitor DNS traffic on `eth0` in verbose mode:
+
+```sh
+sudo ./dns-monitor -i eth0 -v
+```
+
+Analyze a capture file and save the domains and resolutions it contains:
+
+```sh
+./dns-monitor -p capture.pcap -d domains.txt -t translations.txt
+```
